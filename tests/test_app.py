@@ -107,3 +107,15 @@ def test_m001_concurrent_cancel_keeps_other_sale(monkeypatch, tmp_path):
     rows = store.sales(*day_bounds(date(2000, 1, 1), date(2099, 1, 1)))
     assert next(r for r in rows if r["id"] == second["id"])["cancelled_at"] is None
     assert next(r for r in rows if r["id"] == first["id"])["cancel_reason"] == "Correção fictícia na sessão B"
+
+
+def test_unavailable_sales_is_not_zero(monkeypatch, tmp_path):
+    at = enter(app(monkeypatch, tmp_path))
+    def unavailable(*_args, **_kwargs):
+        import sqlite3
+        raise sqlite3.OperationalError("falha fictícia")
+    monkeypatch.setattr(Store, "sales", unavailable)
+    by_label(at.radio, "Navegação").set_value("Vendas do dia").run()
+    assert not at.exception
+    assert "Não foi possível acessar" in at.error[0].value
+    assert not at.metric
