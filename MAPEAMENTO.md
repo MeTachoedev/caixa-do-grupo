@@ -16,7 +16,7 @@ Plano atual: [caixa compartilhado](docs/designs/2026-11-26-caixa-compartilhado.m
 - R-08 · Totais por produto/pessoa/pagamento usam vendas ativas do mesmo conjunto — `test_method_scenario_filters_and_csv`, `test_product_groups_keep_person_separate`.
 - R-09 · Cancelar preserva histórico e repetição não reativa venda — `test_cancel_and_replay_do_not_resurrect`, `test_cancel_invalid`, `test_end_to_end_synthetic`.
 - R-10 · CSV conserva dados e situação; neutraliza fórmulas — `test_csv_formula_text`, `test_csv_quotes_accents_and_formula`, `test_method_scenario_filters_and_csv`.
-- R-11 · Falha de acesso não se apresenta como zero/sucesso — tratamento em `app.py`; teste de falha de gravação/consulta será acrescentado antes da publicação.
+- R-11 · Falha de acesso não se apresenta como zero/sucesso — `test_unavailable_sales_is_not_zero`; falha de gravação coberta pela transação em `Store.write`.
 - R-12 · Caminho de cadastro/venda/consulta utilizável — `test_end_to_end_synthetic`; fumaça visual desktop/celular pendente.
 
 ## M-001 · Cancelamento selecionava outra venda
@@ -27,3 +27,12 @@ Plano atual: [caixa compartilhado](docs/designs/2026-11-26-caixa-compartilhado.m
 - Causa: seletor só com vendas ativas e seleção inicial automática.
 - Correção: manter a seleção explícita por identificador estável, incluir canceladas no recorte e recusar envio sem alvo selecionado.
 - Teste de regressão: `tests/test_app.py` › "M-001: cancelamento em outra sessão não troca a venda selecionada".
+
+## M-002 · Exportação nativa da tabela ignorava proteção do CSV
+- Tipo: segurança
+- Data e versão: 26/11/2026 · primeira versão em desenvolvimento
+- O que a aplicação deve fazer: oferecer somente o CSV preparado para tratar textos de cadastro como texto de planilha.
+- O que aconteceu: a tabela do Streamlit também oferecia download de CSV próprio, que podia manter textos iniciados por fórmula sem a proteção do extrato.
+- Causa: exportação da tabela habilitada por padrão, fora do caminho de `safe_cell`.
+- Correção: `client.disableDataExport = true` na configuração; permanece o botão Baixar extrato CSV tratado.
+- Teste de regressão: `tests/test_config.py` › "M-002: somente o CSV tratado pelo app pode ser exportado pela tela".
